@@ -340,10 +340,26 @@ def parse_arguments():
 if __name__ == "__main__":
     args = parse_arguments()
     if args.train:
-        train(args.root, args.batch_size, args.epochs, args.save_path)
+        if args.root is not None:
+            train(args.root, args.batch_size, args.epochs, args.save_path)
+        else:
+            print("Root directory not provided")
+            sys.exit(1)
     if args.test:
-        testModel(args.root, args.batch_size)
+        if args.root is not None:
+            testModel(args.root, args.batch_size)
+        else:
+            print("Root directory not provided")
+            sys.exit(1)
     if args.visualize:
-        visualizeImages(args.root, args.batch_size)
+        if args.root is not None:
+            visualizeImages(args.root, args.batch_size)
+        else:
+            print("Root directory not provided")
+            sys.exit(1)
     if args.predict:
-        predict_single_image(args.image_path, args.model_path, args.device)
+        if args.image_path is not None:
+            predict_single_image(args.image_path, args.model_path, args.device)
+        else:
+            print("Image path not provided")
+            sys.exit(1)
