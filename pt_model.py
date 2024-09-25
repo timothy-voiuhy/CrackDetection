@@ -14,6 +14,7 @@ from pathlib import Path
 import sys
 import shutil
 import matplotlib.pyplot as plt
+import argparse
 
 class customDataset(Dataset):
     def __init__(self, root, data, labels, classes = None, transform=None):
@@ -292,12 +293,17 @@ def testModel(model, data_loader, loss_fn, device = None):
   avg_accuracy = total_accuracy / len(data_loader)
   return avg_loss, avg_accuracy
 
-def train(root, batch_size = 64):
+def train(root, batch_size = 64, device = None, epochs = 3, save_path = None, train = True, test = True, visualize = True, predict = True):
     # device agnostic code
-    if torch.cuda.is_available():
-        print("GPU Available")
-        device = torch.device("cuda")
-        torch.backends.cuda.matmul.allow_tf32 = True
+    if device is not None:
+        # confirm device availability
+        if torch.cuda.is_available():
+            print("GPU Available")
+            device = torch.device("cuda")
+            torch.backends.cuda.matmul.allow_tf32 = True
+        else:
+            print("GPU not available, using CPU")
+            device = torch.device("cpu")
 
     train_dir = os.path.join(root, "train")
     test_dir = os.path.join(root, "test")
@@ -312,6 +318,32 @@ def train(root, batch_size = 64):
     optimizer = optim.Adam(model.parameters(), lr=0.001)
     loss_fn = nn.BCELoss()
     # train the model
-    trainModel(model, train_dataloader, val_dataloader, optimizer, loss_fn, epochs= 3, device= device)
+    trainModel(model, train_dataloader, val_dataloader, optimizer, loss_fn, epochs= epochs, device= device)
     test_loss, test_accuracy = testModel(model, test_dataloader, loss_fn, device)
     print(f"Test Loss: {test_loss}, Test Accuracy: {test_accuracy}")
+
+def parse_arguments():
+    parser = argparse.ArgumentParser(description="Train a model on custom data")
+    parser.add_argument("--root", type=str, required=True, help="Root directory of the dataset")
+    parser.add_argument("--epochs", type=int, default=3, help="Number of epochs to train for")
+    parser.add_argument("--save_path", type=str, default=None, help="Path to save the model")
+    parser.add_argument("--train", action="store_true", help="Train the model")
+    parser.add_argument("--test", action="store_true", help="Test the model")
+    parser.add_argument("--predict", action="store_true", help="Predict on a single image")
+    parser.add_argument("--visualize", action="store_true", help="Visualize the data")
+    parser.add_argument("--batch_size", type=int, default=64, help="Batch size for training and testing")
+    parser.add_argument("--image_path", type=str, default=None, help="Path to the image file")
+    parser.add_argument("--model_path", type=str, default=None, help="Path to the model file")
+    parser.add_argument("--device", type=str, default=None, help="Device to run the prediction on")
+    return parser.parse_args()
+
+if __name__ == "__main__":
+    args = parse_arguments()
+    if args.train:
+        train(args.root, args.batch_size, args.epochs, args.save_path)
+    if args.test:
+        testModel(args.root, args.batch_size)
+    if args.visualize:
+        visualizeImages(args.root, args.batch_size)
+    if args.predict:
+        predict_single_image(args.image_path, args.model_path, args.device)

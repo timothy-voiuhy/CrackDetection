@@ -1,0 +1,9 @@
+torch
+torchvision
+tensorflow
+scikit-learn 
+matplotlib 
+pathlib 
+tqdm 
+pillow
+shutil
