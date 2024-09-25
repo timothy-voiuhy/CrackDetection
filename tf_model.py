@@ -1,8 +1,10 @@
+import os
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense
 from PIL import Image
 import numpy as np
+import argparse
 
 def createtfDataLoader(__dir, batch_size):
   dataset = tf.keras.utils.image_dataset_from_directory(
@@ -26,7 +28,11 @@ tf_CrackDetectionModel = Sequential([
     Dense(1, activation = "sigmoid")
 ])
 
-def traintfModel(model, epochs, __train_dir, __test_dir, __val_dir, batch_size, tf_best_model_path):
+def traintfModel(model, epochs, __root = None, __train_dir=None, __test_dir = None, __val_dir = None, batch_size = 64, tf_best_model_path = None):
+    if __root is not None:
+        __train_dir = os.path.join(__root, __train_dir)
+        __test_dir = os.path.join(__root, __test_dir)
+        __val_dir = os.path.join(__root, __val_dir)
     tf_train_dataloader = createtfDataLoader(__train_dir, batch_size)
     tf_test_dataloader = createtfDataLoader(__test_dir, batch_size)
     tf_val_dataloader = createtfDataLoader(__val_dir, batch_size)
@@ -84,3 +90,24 @@ def predict_single_image_tf(image_path, model_path = None, model = None):
     predicted_class = (prediction > 0.5).astype(int)[0][0]  # Assuming binary classification
 
     return predicted_class
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Train or predict with a TensorFlow model")
+    parser.add_argument("--train", action="store_true", help="Train the model")
+    parser.add_argument("--predict", action="store_true", help="Predict on a single image")
+    parser.add_argument("--image_path", type=str, help="Path to the image file for prediction")
+    parser.add_argument("--root", type=str, help="Root directory of the dataset")
+    parser.add_argument("--model_path", type=str, help="Path to the saved Keras model file (.keras)")
+    parser.add_argument("--epochs", type=int, default=3, help="Number of epochs for training")
+    parser.add_argument("--train_dir", type=str, default="data/train", help="Directory for training data")
+    parser.add_argument("--test_dir", type=str, default="data/test", help="Directory for testing data")
+    parser.add_argument("--val_dir", type=str, default="data/val", help="Directory for validation data")
+    parser.add_argument("--batch_size", type=int, default=32, help="Batch size for training and testing")
+    return parser.parse_args()
+
+if __name__ == "__main__":
+    args = parse_args()
+    if args.train:
+        traintfModel(tf_CrackDetectionModel, args.epochs, args.root, args.train_dir, args.test_dir, args.val_dir, args.batch_size, args.model_path)
+    elif args.predict:
+        predict_single_image_tf(args.image_path, args.model_path)

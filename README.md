@@ -6,6 +6,10 @@ Pytorch model is in pt_model.py
 
 Tensorflow model is in tf_model.py
 
+# Note 
+I have not personally tested the python files but i have extracted the functions from the .ipynb file i have been using on google colab.
+But most probably the functions should work as expected.
+
 # How to use the model
 
 1. Clone the repository
